@@ -1,67 +1,73 @@
 var Mapper = require('./Mapper'),
 	Stack = require('./Stack').Stack
 
-function QuickConnect(testing, debug) {
-	var mapper, executionMap, debug, fakeQC
+function QuickConnect(config){
+	this.init(config);
+}
 
-	this.WAIT_FOR_DATA = 'wAiT'
-	this.STACK_EXIT = 'ExIt_StAcK'
-	this.STACK_CONTINUE = true
-	
-	mapper = new Mapper
-	this.mapper = mapper
-	
-	debug = debug || console.log
-	this.debug = debug
-	
-	function blah(){
-    var immediateExists = true
-    try{
-      setImmediate(function(){})
-    } catch (e) {
-      immediateExists = false
-    }
-    this.nextTick = function (fn, prefereNextTick) {
-      if (prefereNextTick || !immediateExists) {
-        process.nextTick(fn)
-      } else {
-        setImmediate(fn)
-      }
-    }
-  }
-  blah.call(this)
-	
-	fakeQC = (function (self) {
-  	return {
-  		WAIT_FOR_DATA : 'wAiT',
-  		STACK_EXIT : 'ExIt_StAcK',
-  		STACK_CONTINUE : true,
-  		handleRequest: function () {
-			return handleRequest.apply(self, [].slice.call(arguments,0))
-		},
-  		handleRequests: function () {
-			return handleRequests.apply(self, [].slice.call(arguments,0))
-		},
-  		checkForStack: function(){
-  		    return checkForStack.apply(self, [].slice.call(arguments,0))
-  		},
-  		debug: self.debug,
-  		nextTick: self.nextTick
-  	}
-  })(this)
-	
-	executionMap = {}
-	
-	function genrateUUID() {
-	  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g
-	    , function(c) {
-	    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8)
-	    return v.toString(16)
-	  })
-	  return uuid
-	}
-	
-	function handleRequest(aCmd, requestData, callback/*, runBackground*/) {
+QuickConnect.prototype = {
+	init : function(config){
+		var mapper,
+			executionMap = {},
+			fakeQC,
+			immediateExists = true,
+		this.WAIT_FOR_DATA = (config.wait) ? config.wait : "wAiT";
+		this.STACK_EXIT = (config.exit) ? config.exit : "ExIt_StAcK";
+		this.debug = (config.debug) ? config.debug : console.log;
+		this.STACK_CONTINUE = true;
+		this.mapper = new Mapper
+		var immediateTest = function(){
+			var immediateExists = true;
+			try {
+				setImmediate(function(){})
+			} catch(e){
+				immediateExists = false
+			}
+			this.nextTick = function(fn, prefereNextTick){
+				if(prefereNextTick || !immediateExists){
+					process.nextTick(fn);
+				} else {
+					setImmediate(fn);
+				}
+			}
+		}
+		immediateTest.call(this);
+		fakeQC = (function(self){
+			return {
+				WAIT_FOR_DATA : QuickConnect.WAIT_FOR_DATA,
+				STACK_EXIT : QuickConnect.STACK_EXIT,
+				STACK_CONTINUE : QuickConnect.STACK_CONTINUE,
+				handleRequest : function(){
+					return handleRequest.apply(self, [].slice.call(arguments,0))
+				},
+				handleRequests : function(){
+					return handleRequests.apply(self, [].slice.call(arguments,0))
+				},
+				checkForStack : function(){
+					return checkForStack.apply(self, [].slice.call(arguments,0))
+				},
+				debug : QuickConnect.debug,
+				nextTick.QuickConnect.nextTick
+			}
+
+		})(this)
+
+	},
+	checkForStack : function (){
+
+	}, 
+	command : function(){
+
+	},
+	genrateUUID :  function(){
+		var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8)
+			return v.toString(16);
+		});
+	  return uuid;
+
+	},
+	handleRequest : function(aCmd, requestData, callback/*, runBackground*/){
 		var stack, uuid, funcs
 		uuid = genrateUUID()
 		funcs = cloneConsumableStacks(aCmd, uuid)
@@ -75,79 +81,24 @@ function QuickConnect(testing, debug) {
 			stack.go()
 		})
 		return stack
-	}
-	this.handleRequest = handleRequest
-	
-//	function handleRequests(aCommandArray, requestData
-//	                    , allStacksCompleteCallback, runParallel/*, runBackground*/) {
-//	    
-//	    var uuid, i, count, aCmd, stacks = [], oldStack, stack, tail
-//	    
-//		if (!aCommandArray || aCommandArray.length == 0){
-//		  console.warn('WARNING: attempting to execute a request without one or more commands.')
-//		}
-//		if (!Array.isArray(aCommandArray)) {
-//		  aCommandArray = [aCommandArray]
-//		}
-//		
-//		aCommandArray = aCommandArray.slice()
-//		
-//		for (i = 0, count = aCommandArray.length; i < count; i++) {
-//			uuid = genrateUUID()
-//			aCmd = aCommandArray[i]
-//			funcs = cloneConsumableStacks(aCmd, uuid)
-//			if (!funcs) {
-//				console.warn('WARNING: attempting to execute the command "'
-//				  + (aCommandArray[0] || 'missing')+'" for which no control functions are mapped.')
-//				  return
-//			}
-//			stack = new Stack(uuid, funcs, requestData, fakeQC, callback, testing)
-//			if (oldStack && !runParallel) {
-//				oldStack.next = stack
-//			}
-//			stacks.push(stack)
-//		}
-//		this.nextTick(function () {
-//			stacks[0].go()
-//		})
-//		return stacks
-//	}
-//	this.handleRequest = handleRequest
-	
-	function cloneConsumableStacks(aCmd, uuid){
-	
-	  //var aCmd = aCommandArray.shift()
-	  //debug('cloning: ')
-	  var funcs = {
-	  	"validationMapConsumables": {},
-	  	"dataMapConsumables": {},
-	  	"viewMapConsumables": {}
+	},
+	cloneConsumableStacks : function(aCmd, uuid){
+		var funcs = {
+			"validationMapConsumables": {},
+			"dataMapConsumables": {},
+			"viewMapConsumables": {}
 	  }
-	  //debug("Command: "+aCmd)
-	  //if mappings are found then duplicate the mapped 
-	  //control function arrays for consumption
-	  if (!mapper.validationMap[aCmd] && !mapper.dataMap[aCmd] 
-	          && !mapper.viewMap[aCmd]) {
-	    //debug("returning null as the command")
-	    return
+	  if (!this.mapper.validationMap[aCmd] && !this.mapper.dataMap[aCmd] 
+			  && !mapper.viewMap[aCmd]) {
+		return
 	  }
 	
-	  funcs.validationMapConsumables[uuid] = (mapper.validationMap[aCmd] || [] ).slice()
-	  funcs.dataMapConsumables[uuid] = (mapper.dataMap[aCmd] || [] ).slice()
-	  funcs.viewMapConsumables[uuid] = (mapper.viewMap[aCmd] || [] ).slice()
+	  funcs.validationMapConsumables[uuid] = (this.mapper.validationMap[aCmd] || [] ).slice()
+	  funcs.dataMapConsumables[uuid] = (this.mapper.dataMap[aCmd] || [] ).slice()
+	  funcs.viewMapConsumables[uuid] = (this.mapper.viewMap[aCmd] || [] ).slice()
 	  
 	  return funcs
 	}
-
-	function checkForStack(stackName){
-		return this.mapper.checkForStack(stackName)
-	}
-	this.checkForStack = checkForStack
-	
-	function command(command, callback) {
-		this.mapper.command(command, callback)
-	}
-	this.command = command
 }
 exports.QuickConnect = QuickConnect
 exports.sharedQC = new QuickConnect
