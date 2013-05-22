@@ -6,17 +6,21 @@ function QuickConnect(config){
 }
 
 QuickConnect.prototype = {
+	WAIT_FOR_DATA : "wAiT",
+	STACK_EXIT : "ExIt_StAcK",
+	debug : console.log,
+	STACK_CONTINUE : true,
+	mapper = new Mapper,
 	init : function(config){
-		var mapper,
-			executionMap = {},
-			debug,
+		var executionMap = {},
 			fakeQC,
 			immediateExists = true,
-		this.WAIT_FOR_DATA = (config.wait) ? config.wait : "wAiT";
-		this.STACK_EXIT = (config.exit) ? config.exit : "ExIt_StAcK";
-		this.debug = (config.debug) ? config.debug : console.log;
-		this.STACK_CONTINUE = true;
-		this.mapper = new Mapper
+		if(config){
+			this.WAIT_FOR_DATA = (config.wait) ? config.wait : this.WAIT_FOR_DATA;
+			this.STACK_EXIT = (config.exit) ? config.exit : this.STACK_EXIT;
+			this.debug = (config.debug) ? config.debug : this.debug;
+			this.STACK_CONTINUE = true;
+		}
 		var immediateTest = function(){
 			var immediateExists = true;
 			try {
@@ -52,7 +56,6 @@ QuickConnect.prototype = {
 			}
 
 		})(this)
-
 	},
 	checkForStack : function (stackName){
 		return this.mapper.checkForStack(stackName)
