@@ -9,6 +9,7 @@ QuickConnect.prototype = {
 	init : function(config){
 		var mapper,
 			executionMap = {},
+			debug,
 			fakeQC,
 			immediateExists = true,
 		this.WAIT_FOR_DATA = (config.wait) ? config.wait : "wAiT";
@@ -53,17 +54,17 @@ QuickConnect.prototype = {
 		})(this)
 
 	},
-	checkForStack : function (){
-
+	checkForStack : function (stackName){
+		return this.mapper.checkForStack(stackName)
 	}, 
-	command : function(){
-
+	command : function(command, callback){
+		this.mapper.command(command, callback)
 	},
 	genrateUUID :  function(){
 		var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8)
-			return v.toString(16);
-		});
+	    	var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8)
+	    	return v.toString(16);
+	  	});
 	  return uuid;
 
 	},
@@ -84,13 +85,17 @@ QuickConnect.prototype = {
 	},
 	cloneConsumableStacks : function(aCmd, uuid){
 		var funcs = {
-			"validationMapConsumables": {},
-			"dataMapConsumables": {},
-			"viewMapConsumables": {}
+	  		"validationMapConsumables": {},
+	  		"dataMapConsumables": {},
+	  		"viewMapConsumables": {}
 	  }
+	  //debug("Command: "+aCmd)
+	  //if mappings are found then duplicate the mapped 
+	  //control function arrays for consumption
 	  if (!this.mapper.validationMap[aCmd] && !this.mapper.dataMap[aCmd] 
-			  && !mapper.viewMap[aCmd]) {
-		return
+	          && !mapper.viewMap[aCmd]) {
+	    //debug("returning null as the command")
+	    return
 	  }
 	
 	  funcs.validationMapConsumables[uuid] = (this.mapper.validationMap[aCmd] || [] ).slice()
