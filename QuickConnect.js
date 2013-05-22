@@ -89,12 +89,8 @@ QuickConnect.prototype = {
 	  		"dataMapConsumables": {},
 	  		"viewMapConsumables": {}
 	  }
-	  //debug("Command: "+aCmd)
-	  //if mappings are found then duplicate the mapped 
-	  //control function arrays for consumption
 	  if (!this.mapper.validationMap[aCmd] && !this.mapper.dataMap[aCmd] 
 	          && !mapper.viewMap[aCmd]) {
-	    //debug("returning null as the command")
 	    return
 	  }
 	
